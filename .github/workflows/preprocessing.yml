@@ -1,0 +1,50 @@
+name: Automated Preprocessing - Heart Disease
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  preprocessing:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run actions/checkout@v3
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.12.7
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12.7"
+
+      - name: Check Env
+        run: |
+          python --version
+          ls -la
+
+      - name: Install dependencies
+        run: |
+          pip install pandas==2.2.3 numpy==2.2.1 scikit-learn==1.6.0
+
+      - name: Run automate preprocessing
+        run: |
+          cd preprocessing
+          python automate_Herlita.py \
+            --input ../heart_disease_raw.csv \
+            --output heart_disease_preprocessing
+
+      - name: Upload preprocessed dataset
+        uses: actions/upload-artifact@v3
+        with:
+          name: heart_disease_preprocessing
+          path: preprocessing/heart_disease_preprocessing/
+
+      - name: Commit preprocessed data
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add preprocessing/heart_disease_preprocessing/
+          git diff --staged --quiet || git commit -m "Auto: update preprocessed dataset [skip ci]"
+          git push
+        continue-on-error: true
